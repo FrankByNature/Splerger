@@ -40,8 +40,15 @@ straight from its slot (`SetInventory` + `SetInventoryAccessIndex`).
 
 - **Merge**: each factory tick, items are taken from the inputs round-robin.
 - **Split**: each item goes into the slot of the output whose turn it is. If that
-  slot is still full (backed up) or the output isn't connected, it goes to the
+  slot is full (backed up) or the output isn't connected, it goes to the
   other output, so a blocked output sends everything to the other one.
+- **Slot size 3**: each output slot holds up to 3 items (one item type at a time).
+  With 1, an output could pass at most one item per factory tick, which caps a
+  belt below Mk6 (1200/min) under 20 ticks/s. With 3 the cap is ~3 items per tick
+  (1800/min per output even at 10 ticks/s). Trade-off: up to 3 items are committed
+  to an output early; on a jam they wait instead of rerouting.
+- An input whose front item can't go anywhere (both slots hold a different item)
+  is skipped that tick, so on mixed belts the other input keeps flowing.
 - Net effect: up to 2 belts' worth in, split evenly across 2 belts out. Throughput
   is capped by the belts, not the building.
 

@@ -16,8 +16,10 @@ class UFGFactoryConnectionComponent;
  *
  * - Inputs are taken round-robin (merger behaviour).
  * - Each item goes to the output whose turn it is; if that output's slot is
- *   still full (backed up / unconnected), it goes to the other one
- *   (splitter behaviour).
+ *   full (backed up / unconnected), it goes to the other one (splitter
+ *   behaviour).
+ * - Each output slot holds up to 3 items, so belts can take several items
+ *   per tick at low frame rates.
  *
  * The Blueprint child (Build_Splerger) must name its four
  * FGFactoryConnectionComponents "Input0", "Input1", "Output0", "Output1"
@@ -39,8 +41,11 @@ protected:
 	virtual void Factory_Tick(float dt) override;
 
 private:
-	/** Output slot index (== output index) that should get the next item, or INDEX_NONE if all are full. */
-	int32 PickOutputSlot() const;
+	/** Can buffer slot `slot` take one more of `item`? (empty, or same stackable item below capacity) */
+	bool SlotAccepts(int32 slot, const FInventoryItem& item) const;
+
+	/** Output slot index (== output index) that should get `item`, or INDEX_NONE if none can. */
+	int32 PickOutputSlot(const FInventoryItem& item) const;
 
 	UPROPERTY(Transient)
 	TArray<TObjectPtr<UFGFactoryConnectionComponent>> mSplergerInputs;
