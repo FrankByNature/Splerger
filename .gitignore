@@ -1,0 +1,7 @@
+# Unreal build output (appears inside the linked mod folder)
+Mod/Splerger/Binaries/
+Mod/Splerger/Intermediate/
+Mod/Splerger/Saved/
+*.pdb
+*.sln
+.vs/
