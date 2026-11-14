@@ -8,7 +8,7 @@ Design and port layout: [docs/DESIGN.md](docs/DESIGN.md).
 ```
 Splerger/
 ├── Mod/Splerger/                 ← the mod plugin (linked into the SML project's Mods/)
-│   ├── Splerger.uplugin          mod manifest (ModReference = "Splerger", needs SML ^3.11)
+│   ├── Splerger.uplugin          mod manifest (ModReference = "Splerger", needs SML ^3.12)
 │   ├── Source/Splerger/          C++ module
 │   │   ├── Splerger.Build.cs
 │   │   ├── Public/BuildableSplerger.h      the 2-in / 2-out building class
@@ -26,17 +26,35 @@ Loader) in Coffee Stain's custom Unreal Engine. Authoritative guide:
 <https://docs.ficsit.app> → *Development → Beginner's Guide*. Versions below were
 current at the time of writing; check the docs for the current ones.
 
-### 1. Install the toolchain (one-off, ~100 GB, a few hours)
+### 1. Install the toolchain (one-off, 30+ GB, a few hours)
 
-1. **Visual Studio 2022** (Community is fine) with the workloads *Game development with
-   C++* and *.NET desktop development*, plus the MSVC/Windows SDK versions the docs list.
-   (None is installed on this machine yet.)
-2. **Unreal Engine – CSS** (Coffee Stain's fork, 5.3.2-CSS): link your Epic account to
-   GitHub, join the Epic Games GitHub org, then download the installer from the
-   `satisfactorymodding/UnrealEngine` releases.
-3. **Wwise** (Audiokinetic launcher) — the version the docs list, integrated into the
-   starter project.
-4. **Git**, already installed.
+Checked against the docs source (satisfactorymodding/Documentation) in Nov 2026:
+game on **Unreal 5.6.1-CSS**, **SML 3.12.0**. The community tool
+[SMEH](https://github.com/mklierman/SMEH) can automate most of these steps.
+
+1. **Visual Studio 2022 Community** (not 2026; the docs say 2026 needs different
+   components and breaks the editor's Create C++ Class wizard).
+   Installer: <https://aka.ms/vs/17/release/vs_community.exe> (17.14 channel).
+   - Workloads: *.NET desktop development*, *Desktop development with C++*,
+     *Game development with C++*.
+   - Individual components: *MSVC v143 – VS 2022 C++ x64/x86 build tools (v14.38-17.8)*
+     (marked "Out of Support", still required), *.NET 8.0 Runtime (LTS)*,
+     *.NET Framework 4.8.1 SDK*.
+   - Or import the docs' `SML.vsconfig` (after a default 2022 install: More → Import configuration).
+   - JetBrains Rider works as the editor, but VS 2022 + those components must still be installed.
+2. **Unreal Engine – CSS 5.6.1** (Coffee Stain's fork + modding patches):
+   1. Link GitHub to your Epic account (<https://www.unrealengine.com/en-US/ue-on-github>),
+      accept the EpicGames org invite, and check you can see github.com/EpicGames/UnrealEngine.
+   2. Link to the modding repo with <https://linker.ficsit.app/link>.
+   3. From the latest release of `satisfactorymodding/UnrealEngine`, download
+      `UnrealEngine-CSS-Editor-Win64.exe` and `-1.bin`, `-2.bin`, `-3.bin` into one folder
+      (keep the names exact) and run the `.exe`.
+3. **Wwise 2025.1.6.9117** via the Audiokinetic Launcher (needs a free account).
+   Packages: Authoring, SDK (C++). Platforms: Linux; Windows → Visual Studio 2019,
+   Visual Studio 2022, Game Core. No plugins.
+4. **Git**: already installed (plus Git LFS).
+5. Optional: **Satisfactory Mod Manager** (to install SML/test mods), and the
+   **Clang v25 cross-compile toolchain** only if you want Linux dedicated-server builds.
 
 ### 2. Get the starter project
 
@@ -44,7 +62,7 @@ current at the time of writing; check the docs for the current ones.
 git clone https://github.com/satisfactorymodding/SatisfactoryModLoader.git C:/Modding/SatisfactoryModLoader
 ```
 
-Check out the branch matching your game version, run the Wwise integration step,
+Check out the branch the docs currently suggest (`dev` at the time of writing), run the Wwise integration step,
 then link this mod in:
 
 ```bash
