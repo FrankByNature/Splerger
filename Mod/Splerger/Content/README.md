@@ -1,7 +1,7 @@
 # Content (made in the Unreal editor)
 
 These are `.uasset` files, so they're created inside the Unreal editor, not by hand.
-In the Content Browser they live under **Plugins → Splerger Content** (if Plugins isn't
+In the Content Browser they live under **Plugins → Splerger** (next to "Splerger C++ Classes") (if Plugins isn't
 listed: Content Browser ⚙ Settings → tick *Show Plugin Content*).
 
 Make them in this order: each one refers to the one before.
@@ -25,7 +25,7 @@ assets in the game.
 
 ## 1. `Buildable/Build_Splerger`: the building
 
-1. Right-click in `Splerger Content/Buildable` → *Blueprint Class* → *All Classes* →
+1. Right-click in `Splerger/Buildable` → *Blueprint Class* → *All Classes* →
    search **BuildableSplerger** → name it `Build_Splerger`.
 2. Open the vanilla `Build_ConveyorAttachmentSplitter` next to it and copy across,
    one setting at a time:
@@ -72,7 +72,7 @@ assets in the game.
 ## 5. `RootGameWorld_Splerger`: registers the schematic with SML
 
 1. *Blueprint Class* → parent **GameWorldModule** → `RootGameWorld_Splerger`
-   (at the top of `Splerger Content`).
+   (at the top of the `Splerger` folder).
 2. Tick **Root Module**.
 3. **Schematics** → add `Schematic_Splerger`.
 
