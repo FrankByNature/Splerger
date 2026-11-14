@@ -3,10 +3,19 @@
 #include "FGFactoryConnectionComponent.h"
 #include "FGInventoryComponent.h"
 
+namespace
+{
+	const FName GInputNames[]  = { TEXT("Input0"),  TEXT("Input1")  };
+	const FName GOutputNames[] = { TEXT("Output0"), TEXT("Output1") };
+
+	/** Most items moved per tick, so a long frame can't stall a fast belt. */
+	constexpr int32 GMaxMovesPerTick = 4;
+}
+
 ABuildableSplerger::ABuildableSplerger()
 {
-	// The conveyor-attachment base already creates mBufferInventory and
-	// enables the factory tick; nothing else is needed here for now.
+	// One buffer slot per output; each slot is what that output serves from.
+	mInventorySize = UE_ARRAY_COUNT(GOutputNames);
 }
 
 void ABuildableSplerger::BeginPlay()
@@ -19,174 +28,102 @@ void ABuildableSplerger::BeginPlay()
 	TInlineComponentArray<UFGFactoryConnectionComponent*> connections;
 	GetComponents(connections);
 
-	// Find by name so the order is fixed: Input0, Input1 / Output0, Output1.
-	static const FName InputNames[]  = { TEXT("Input0"),  TEXT("Input1")  };
-	static const FName OutputNames[] = { TEXT("Output0"), TEXT("Output1") };
-	for (const FName& name : InputNames)
+	auto findByName = [&connections](FName name) -> UFGFactoryConnectionComponent*
 	{
 		for (UFGFactoryConnectionComponent* c : connections)
 		{
-			if (c->GetFName() == name) { mSplergerInputs.Add(c); }
+			if (c && c->GetFName() == name) { return c; }
 		}
+		return nullptr;
+	};
+
+	for (const FName& name : GInputNames)
+	{
+		if (UFGFactoryConnectionComponent* c = findByName(name)) { mSplergerInputs.Add(c); }
 	}
-	for (const FName& name : OutputNames)
+	for (const FName& name : GOutputNames)
 	{
-		for (UFGFactoryConnectionComponent* c : connections)
-		{
-			if (c->GetFName() == name) { mSplergerOutputs.Add(c); }
-		}
+		if (UFGFactoryConnectionComponent* c = findByName(name)) { mSplergerOutputs.Add(c); }
 	}
 
-	mLastRequestTime.Init(-1000.f, mSplergerOutputs.Num());
+	if (!HasAuthority() || !mBufferInventory)
+	{
+		return;
+	}
+
+	// The base class sets this up too, but be explicit: output i serves from slot i.
+	if (mBufferInventory->GetSizeLinear() < mSplergerOutputs.Num())
+	{
+		mBufferInventory->Resize(mSplergerOutputs.Num());
+	}
+	for (int32 i = 0; i < mSplergerOutputs.Num(); ++i)
+	{
+		mSplergerOutputs[i]->SetInventory(mBufferInventory);
+		mSplergerOutputs[i]->SetInventoryAccessIndex(i);
+	}
+
 	if (mSplergerInputs.Num() > 0)  { mNextInput  %= mSplergerInputs.Num(); }
 	if (mSplergerOutputs.Num() > 0) { mNextOutput %= mSplergerOutputs.Num(); }
+}
+
+int32 ABuildableSplerger::PickOutputSlot() const
+{
+	const int32 numOutputs = mSplergerOutputs.Num();
+	for (int32 step = 0; step < numOutputs; ++step)
+	{
+		const int32 index = (mNextOutput + step) % numOutputs;
+		const UFGFactoryConnectionComponent* output = mSplergerOutputs[index];
+		if (output && output->IsConnected() && mBufferInventory->IsIndexEmpty(index))
+		{
+			return index;
+		}
+	}
+	return INDEX_NONE;
 }
 
 void ABuildableSplerger::Factory_Tick(float dt)
 {
 	Super::Factory_Tick(dt);
 
-	if (!mBufferInventory || mSplergerInputs.Num() == 0)
+	if (!HasAuthority() || !mBufferInventory || mSplergerInputs.Num() == 0 || mSplergerOutputs.Num() == 0)
 	{
 		return;
 	}
 
-	// Merger half: pull one item per input per pass, starting with whichever
-	// input is next, while the buffer has room.
 	const int32 numInputs = mSplergerInputs.Num();
-	for (int32 pass = 0; pass < numInputs; ++pass)
+	for (int32 move = 0; move < GMaxMovesPerTick; ++move)
 	{
-		const int32 index = (mNextInput + pass) % numInputs;
-		UFGFactoryConnectionComponent* input = mSplergerInputs[index];
-		if (!input || !input->IsConnected())
+		const int32 slot = PickOutputSlot();
+		if (slot == INDEX_NONE)
 		{
-			continue;
+			return; // every connected output is still holding an item
 		}
 
-		// Peek first so we never pull an item we have no room for.
-		TArray<FInventoryItem> peeked;
-		if (!input->Factory_PeekOutput(peeked) || peeked.Num() == 0)
+		// Take one item from the next input that has one.
+		bool moved = false;
+		for (int32 step = 0; step < numInputs && !moved; ++step)
 		{
-			continue;
-		}
-		FInventoryStack probe;
-		probe.Item = peeked[0];
-		probe.NumItems = 1;
-		if (!mBufferInventory->HasEnoughSpaceForStack(probe))
-		{
-			break;
+			const int32 inputIndex = (mNextInput + step) % numInputs;
+			UFGFactoryConnectionComponent* input = mSplergerInputs[inputIndex];
+			if (!input || !input->IsConnected())
+			{
+				continue;
+			}
+
+			FInventoryItem item;
+			float offset = 0.f;
+			if (input->Factory_GrabOutput(item, offset))
+			{
+				mBufferInventory->AddStackToIndex(slot, FInventoryStack(item));
+				mNextInput = (inputIndex + 1) % numInputs;
+				mNextOutput = (slot + 1) % mSplergerOutputs.Num();
+				moved = true;
+			}
 		}
 
-		FInventoryItem item;
-		float offset = 0.f;
-		if (input->Factory_GrabOutput(item, offset))
+		if (!moved)
 		{
-			FInventoryStack stack;
-			stack.Item = item;
-			stack.NumItems = 1;
-			mBufferInventory->AddStack(stack);
-			mNextInput = (index + 1) % numInputs;
-		}
-	}
-}
-
-int32 ABuildableSplerger::FrontSlot() const
-{
-	if (!mBufferInventory)
-	{
-		return INDEX_NONE;
-	}
-	for (int32 i = 0; i < mBufferInventory->GetSizeLinear(); ++i)
-	{
-		FInventoryStack stack;
-		if (mBufferInventory->GetStackFromIndex(i, stack) && stack.HasItems())
-		{
-			return i;
+			return; // nothing waiting on any input
 		}
 	}
-	return INDEX_NONE;
-}
-
-int32 ABuildableSplerger::OutputIndexOf(const UFGFactoryConnectionComponent* connection) const
-{
-	for (int32 i = 0; i < mSplergerOutputs.Num(); ++i)
-	{
-		if (mSplergerOutputs[i] == connection) { return i; }
-	}
-	return INDEX_NONE;
-}
-
-bool ABuildableSplerger::IsOutputsTurn(int32 index) const
-{
-	if (index == mNextOutput)
-	{
-		return true;
-	}
-	// Not our turn: still allowed if the output that holds the turn is
-	// unconnected or hasn't asked recently (i.e. it's backed up).
-	const UFGFactoryConnectionComponent* holder = mSplergerOutputs.IsValidIndex(mNextOutput) ? mSplergerOutputs[mNextOutput] : nullptr;
-	if (!holder || !holder->IsConnected())
-	{
-		return true;
-	}
-	const float now = GetWorld() ? GetWorld()->GetTimeSeconds() : 0.f;
-	return now - mLastRequestTime[mNextOutput] > OutputTurnTimeout;
-}
-
-bool ABuildableSplerger::Factory_PeekOutput_Implementation(const UFGFactoryConnectionComponent* connection, TArray<FInventoryItem>& out_items, TSubclassOf<UFGItemDescriptor> type) const
-{
-	const int32 index = OutputIndexOf(connection);
-	if (index == INDEX_NONE)
-	{
-		return false;
-	}
-	if (GetWorld())
-	{
-		mLastRequestTime[index] = GetWorld()->GetTimeSeconds();
-	}
-
-	const int32 slot = FrontSlot();
-	if (slot == INDEX_NONE || !IsOutputsTurn(index))
-	{
-		return false;
-	}
-	FInventoryStack stack;
-	mBufferInventory->GetStackFromIndex(slot, stack);
-	if (type && stack.Item.GetItemClass() != type)
-	{
-		return false;
-	}
-	out_items.Add(stack.Item);
-	return true;
-}
-
-bool ABuildableSplerger::Factory_GrabOutput_Implementation(UFGFactoryConnectionComponent* connection, FInventoryItem& out_item, float& out_OffsetBeyond, TSubclassOf<UFGItemDescriptor> type)
-{
-	const int32 index = OutputIndexOf(connection);
-	if (index == INDEX_NONE)
-	{
-		return false;
-	}
-	if (GetWorld())
-	{
-		mLastRequestTime[index] = GetWorld()->GetTimeSeconds();
-	}
-
-	const int32 slot = FrontSlot();
-	if (slot == INDEX_NONE || !IsOutputsTurn(index))
-	{
-		return false;
-	}
-	FInventoryStack stack;
-	mBufferInventory->GetStackFromIndex(slot, stack);
-	if (type && stack.Item.GetItemClass() != type)
-	{
-		return false;
-	}
-
-	out_item = stack.Item;
-	out_OffsetBeyond = 0.f;
-	mBufferInventory->RemoveFromIndex(slot, 1);
-	mNextOutput = (index + 1) % mSplergerOutputs.Num();
-	return true;
 }

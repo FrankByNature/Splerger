@@ -74,10 +74,11 @@ Right-click `FactoryGame.uproject` → *Generate Visual Studio project files*, o
 
 ### 3. Compile the C++ class
 
-The first build is where `BuildableSplerger` gets checked against the real headers
-(`Source/FactoryGame/Public/Buildables/FGBuildableConveyorAttachment.h`,
-`FGFactoryConnectionComponent.h`, `FGInventoryComponent.h`). It was written from those
-APIs but hasn't been compiled yet, so expect to fix a signature or two.
+`BuildableSplerger` follows the 1.x conveyor-attachment model and was checked against
+the starter project's headers (`Source/FactoryGame/Public/Buildables/FGBuildableConveyorAttachment.h`,
+`FGFactoryConnectionComponent.h`, `FGInventoryComponent.h`, SML dev / CL517554), but the
+first real compile is still the proof. Build **Development Editor / Win64** by
+right-clicking *Games/FactoryGame → Build* (not *Build Solution*).
 
 ### 4. Create the assets in the editor
 

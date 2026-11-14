@@ -34,11 +34,14 @@ Every connection component's forward (X) axis must point **out** of the building
 
 ## Behaviour
 
-- **Merge**: each factory tick, inputs are pulled round-robin into the buffer
-  (`mBufferInventory`, from the conveyor-attachment base) while it has room.
-- **Split**: outputs take turns. An output that isn't connected, or hasn't asked
-  for an item for `OutputTurnTimeout` (0.25 s) because it's backed up, gives up its
-  turn, so the other output gets everything.
+Same model as the vanilla attachments in game 1.x: the buffer inventory
+(`mBufferInventory`) has one slot per output, and each output connection serves belts
+straight from its slot (`SetInventory` + `SetInventoryAccessIndex`).
+
+- **Merge**: each factory tick, items are taken from the inputs round-robin.
+- **Split**: each item goes into the slot of the output whose turn it is. If that
+  slot is still full (backed up) or the output isn't connected, it goes to the
+  other output, so a blocked output sends everything to the other one.
 - Net effect: up to 2 belts' worth in, split evenly across 2 belts out. Throughput
   is capped by the belts, not the building.
 
