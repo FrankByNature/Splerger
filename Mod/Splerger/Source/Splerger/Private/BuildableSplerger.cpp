@@ -62,7 +62,7 @@ void ABuildableSplerger::BeginPlay()
 		if (UFGFactoryConnectionComponent* c = findByName(name)) { mSplergerOutputs.Add(c); }
 	}
 
-	UE_LOG(LogSplerger, Log, TEXT("%s BeginPlay: %d inputs, %d outputs, buffer %s (%d slots), factory tick %s"),
+	UE_LOG(LogSplerger, Verbose, TEXT("%s BeginPlay: %d inputs, %d outputs, buffer %s (%d slots), factory tick %s"),
 		*GetName(), mSplergerInputs.Num(), mSplergerOutputs.Num(),
 		mBufferInventory ? TEXT("ok") : TEXT("MISSING"),
 		mBufferInventory ? mBufferInventory->GetSizeLinear() : 0,

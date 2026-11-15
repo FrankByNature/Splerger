@@ -5,3 +5,9 @@ Mod/Splerger/Saved/
 *.pdb
 *.sln
 .vs/
+
+# Alpakit packaged output
+/Splerger/
+
+# Blender backup files
+*.blend1

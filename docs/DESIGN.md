@@ -5,8 +5,8 @@ with **two inputs and two outputs**.
 
 ## Port layout (actor local frame, top view)
 
-The vanilla attachments have Input1 on −X and Output1 on +X (see `CA_Splitter` /
-`CA_Merger` in `../../sbp_editor/definitions.py`). The Splerger keeps that
+The vanilla attachments have Input1 on −X and Output1 on +X (see the `CA_Splitter` /
+`CA_Merger` Blueprints). The Splerger keeps that
 straight-through pair so the build gun can still snap it onto the middle of a belt,
 and puts the second pair on the sides:
 
@@ -62,6 +62,4 @@ Code: `Mod/Splerger/Source/Splerger/{Public,Private}/BuildableSplerger.*`.
 ## Later ideas
 
 - Mode switch (interaction UI): split-only / merge-only / priority input.
-- Own mesh instead of the vanilla splitter's.
-- sbp_editor support: add a `"Splerger"` entry to `BUILDING_DEFS` with its class path
-  `/Splerger/Buildable/Build_Splerger.Build_Splerger_C` once the mod builds.
+- Own icons instead of the vanilla splitter's.
