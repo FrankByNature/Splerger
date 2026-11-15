@@ -40,7 +40,7 @@ assets in the game.
      outputs → our Output1, the other side → our Input1)
    - **Direction**: Input for `Input0`/`Input1`, Output for `Output0`/`Output1`
    - **Connector** type: Conveyor
-4. **Display Name**: Splerger. **Description**: e.g. "Two inputs, two outputs.
+4. **Display Name**: Conveyor Splerger (like "Conveyor Splitter"). **Description**: e.g. "Two inputs, two outputs.
    Merges both inputs and splits them evenly across both outputs."
 5. Compile + Save.
 
@@ -76,7 +76,12 @@ assets in the game.
 2. Tick **Root Module**.
 3. **Schematics** → add `Schematic_Splerger`.
 
-## 6. Icons (later)
+## 6. `UI/IconDesc_Splerger_256` / `_512`: the icons
 
-Own `IconDesc_Splerger_256` / `_512` textures: import PNGs from `../../../Art/`
-and point the descriptor at them.
+Made from `Art/Icon/Icon_Splerger_outputs_256.png` / `_512.png` (the outputs side,
+cut out of an in-game screenshot). `scripts/import_icon.py` imports them, copies the
+vanilla splitter icons' texture settings, and sets them on `Desc_Splerger` as
+**Small Icon** (256) and **Big Icon** (512). The PNGs fill the full width with no
+side padding, like the vanilla splitter/merger icons. The script also sets
+`Build_Splerger`'s **Display Name** to "Conveyor Splerger". Run it in the editor's Output Log
+(Cmd → Python): `py "<repo>/scripts/import_icon.py"`.
