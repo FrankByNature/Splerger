@@ -4,6 +4,8 @@
 #include "FGInventoryComponent.h"
 #include "Resources/FGItemDescriptor.h"
 
+DEFINE_LOG_CATEGORY_STATIC(LogSplerger, Log, All);
+
 namespace
 {
 	const FName GInputNames[]  = { TEXT("Input0"),  TEXT("Input1")  };
@@ -24,6 +26,12 @@ ABuildableSplerger::ABuildableSplerger()
 {
 	// One buffer slot per output; each slot is what that output serves from.
 	mInventorySize = UE_ARRAY_COUNT(GOutputNames);
+
+	// The conveyor-attachment base doesn't enable the factory tick; the vanilla
+	// splitter/merger do it in their own constructors. Without this,
+	// Factory_Tick never runs and items never move.
+	mFactoryTickFunction.bCanEverTick = true;
+	mFactoryTickFunction.bStartWithTickEnabled = true;
 }
 
 void ABuildableSplerger::BeginPlay()
@@ -52,6 +60,21 @@ void ABuildableSplerger::BeginPlay()
 	for (const FName& name : GOutputNames)
 	{
 		if (UFGFactoryConnectionComponent* c = findByName(name)) { mSplergerOutputs.Add(c); }
+	}
+
+	UE_LOG(LogSplerger, Log, TEXT("%s BeginPlay: %d inputs, %d outputs, buffer %s (%d slots), factory tick %s"),
+		*GetName(), mSplergerInputs.Num(), mSplergerOutputs.Num(),
+		mBufferInventory ? TEXT("ok") : TEXT("MISSING"),
+		mBufferInventory ? mBufferInventory->GetSizeLinear() : 0,
+		mFactoryTickFunction.bCanEverTick ? TEXT("on") : TEXT("OFF"));
+	if (mSplergerInputs.Num() != UE_ARRAY_COUNT(GInputNames) || mSplergerOutputs.Num() != UE_ARRAY_COUNT(GOutputNames))
+	{
+		FString found;
+		for (UFGFactoryConnectionComponent* c : connections)
+		{
+			found += FString::Printf(TEXT(" %s"), *c->GetName());
+		}
+		UE_LOG(LogSplerger, Warning, TEXT("%s: expected ports Input0/Input1/Output0/Output1, found:%s"), *GetName(), *found);
 	}
 
 	if (!HasAuthority() || !mBufferInventory)
