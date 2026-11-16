@@ -31,18 +31,26 @@ assets in the game.
    one setting at a time:
    - its static mesh component (same mesh)
    - the **clearance** box / clearance data
-   - **Hologram Class** (the splitter uses a conveyor attachment hologram)
+   - **Hologram Class** → `Holo_Splerger` (see below)
    - **Inventory Size** is set by the C++ (2); leave it.
 3. Add four **FGFactoryConnection** components, named exactly
-   `Input0`, `Input1`, `Output0`, `Output1`:
+   `Input1`, `Output1`, `Input2`, `Output2`:
    - copy location / rotation / connector clearance from the splitter's connections
-     (its straight-through input and output → our Input0 / Output0, one of its side
-     outputs → our Output1, the other side → our Input1)
-   - **Direction**: Input for `Input0`/`Input1`, Output for `Output0`/`Output1`
+     (its straight-through input and output → our Input1 / Output1, one of its side
+     outputs → our Output2, the other side → our Input2). The straight-through pair
+     **must** be called Input1/Output1: the vanilla hologram connects a cut belt to
+     the components with those names.
+   - **Direction**: Input for `Input1`/`Input2`, Output for `Output1`/`Output2`
    - **Connector** type: Conveyor
 4. **Display Name**: Conveyor Splerger (like "Conveyor Splitter"). **Description**: e.g. "Two inputs, two outputs.
    Merges both inputs and splits them evenly across both outputs."
 5. Compile + Save.
+
+`scripts/setup_ports_and_hologram.py` does the port renaming (1.0.0 used
+Input0/Input1/Output0/Output1) and the hologram: it copies the vanilla
+`Holo_ConveyorAttachment` to `Buildable/Holo_Splerger`, reparents it to the C++
+`SplergerHologram` (adds flipping the side ports when placing on a belt), and sets it
+as Build_Splerger's Hologram Class.
 
 ## 2. `Buildable/Desc_Splerger`: what the build menu shows
 

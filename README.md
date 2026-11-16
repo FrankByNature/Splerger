@@ -11,8 +11,11 @@ the same 4 m × 4 m footprint as the vanilla splitter and merger.
 - **Two in, two out.** One input and one output run straight through, so it snaps onto
   the middle of a belt like a vanilla splitter. The other input and output are on the
   sides.
+- **Pick which side is which.** While placing it on a belt, rotate to swap which side
+  the extra input and output face.
 - **Even merging.** Items are taken from the two inputs in turn.
-- **Even splitting.** Items go to the two outputs in turn.
+- **Even splitting.** Items go to the two outputs in turn, and each output gets a mix
+  of both inputs.
 - **Overflow.** If one output is backed up or not connected, everything goes to the
   other output.
 - **Mixed belts keep moving.** If an item from one input can't go anywhere yet, that

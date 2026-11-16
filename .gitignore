@@ -11,3 +11,6 @@ Mod/Splerger/Saved/
 
 # Blender backup files
 *.blend1
+
+# Python
+__pycache__/
